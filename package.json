@@ -1,0 +1,23 @@
+{
+  "name": "codify-telegram-bot",
+  "version": "1.0.0",
+  "description": "AI Telegram бот для IT-школы программирования Codify",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "nodemon bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": ["telegram", "bot", "codify", "ai", "gemini"],
+  "author": "Codify Academy Team",
+  "license": "MIT"
+}
