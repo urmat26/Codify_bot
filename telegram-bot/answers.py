@@ -107,12 +107,15 @@ ENROLL = """✏️ Как записаться на курсы Codify:
 
 CONTACTS = """📞 Контакты Codify:
 
-📞 Телефон: +996 500 431 430
+📞 Основной: +996 500 431 430
+📞 Второй: +996 700 431 430
 📧 Email: info@codifylab.com
 🌐 Сайт: codifylab.com
 📸 Instagram: @codify.kids
 ▶️ YouTube: @codifypodcast
 💬 WhatsApp: wa.me/996500431430
+✈️ Telegram: @codify_community
+📘 Facebook: fb.com/teens.codify
 
 📍 Филиалы в Бишкеке:
   • 7-й мкр, 26/2 (ДСК)
