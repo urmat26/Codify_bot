@@ -257,6 +257,20 @@ async def process_phone(message: Message, state: FSMContext) -> None:
 
     logger.info("Запись: Имя=%s, Телефон=%s, ChatID=%d", name, phone, message.chat.id)
 
+    manager_id = os.getenv("MANAGER_CHAT_ID")
+    if manager_id:
+        try:
+            await bot.send_message(
+                int(manager_id),
+                f"📩 <b>Новая заявка на пробный!</b>\n\n"
+                f"👤 <b>Имя:</b> {name}\n"
+                f"📞 <b>Телефон:</b> {phone}\n"
+                f"🆔 ChatID: {message.chat.id}",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.error("Failed to notify manager: %s", e)
+
     text = (
         f"🎉 <b>Заявка на пробный урок принята!</b>\n\n"
         f"👤 <b>Имя:</b> {name}\n"
