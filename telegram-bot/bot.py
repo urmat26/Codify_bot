@@ -7,17 +7,17 @@ import signal
 from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-from aiogram.filters import Command, CommandStart, StateFilter
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 
-from config import BOT_NAME, WELCOME_MESSAGE, HELP_MESSAGE, ERROR_MESSAGE, QUOTA_MESSAGE
+from config import BOT_NAME, WELCOME_MESSAGE, HELP_MESSAGE
 from prompts import SYSTEM_PROMPT
 from ai import ask_ai
-from session import add_message, get_session, clear_session, cleanup
+from session import add_message, get_session, clear_session
 from cache import cache_get, cache_set
 import answers
 
@@ -27,68 +27,66 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 LOCK_FILE = "bot.lock"
-
 pending: set[int] = set()
+
 
 class Enrollment(StatesGroup):
     name = State()
     phone = State()
 
-MAIN_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=[
-    [
-        InlineKeyboardButton(text="🪙 CodeCoin", callback_data="codecoin"),
-        InlineKeyboardButton(text="👦 Возраст", callback_data="age"),
-    ],
-    [
-        InlineKeyboardButton(text="📚 Курсы", callback_data="courses"),
-        InlineKeyboardButton(text="📅 Расписание", callback_data="schedule"),
-    ],
-    [
-        InlineKeyboardButton(text="📍 Адрес", callback_data="address"),
-        InlineKeyboardButton(text="💻 Онлайн", callback_data="online"),
-    ],
-    [
-        InlineKeyboardButton(text="💰 Цены", callback_data="prices"),
-        InlineKeyboardButton(text="✏️ Записаться", callback_data="enroll"),
-    ],
-    [
-        InlineKeyboardButton(text="📞 Контакты", callback_data="contacts"),
-        InlineKeyboardButton(text="👨‍🏫 Менторы", callback_data="mentors"),
-    ],
-    [
-        InlineKeyboardButton(text="ℹ️ О школе", callback_data="about"),
-        InlineKeyboardButton(text="❓ FAQ", callback_data="faq"),
-    ],
-])
 
-LINK_BUTTONS = {
-    "courses": [[InlineKeyboardButton(text="✏️ Записаться на пробный", url="https://wa.me/996500431430")]],
-    "enroll": [[InlineKeyboardButton(text="💬 WhatsApp", url="https://wa.me/996500431430"), InlineKeyboardButton(text="✈️ Telegram", url="https://t.me/codify_community")]],
-    "prices": [[InlineKeyboardButton(text="💬 Узнать цену в WhatsApp", url="https://wa.me/996500431430")]],
-    "address": [[InlineKeyboardButton(text="📍 7-й мкр на карте", url="https://go.2gis.com/Aw4me"), InlineKeyboardButton(text="📍 Ибраимова на карте", url="https://go.2gis.com/yhL33")]],
-    "contacts": [[InlineKeyboardButton(text="💬 WhatsApp", url="https://wa.me/996500431430"), InlineKeyboardButton(text="📸 Instagram", url="https://www.instagram.com/codify.kids/")]],
-    "schedule": [[InlineKeyboardButton(text="✏️ Выбрать время", url="https://wa.me/996500431430")]],
-    "online": [[InlineKeyboardButton(text="💬 Записаться онлайн", url="https://wa.me/996500431430")]],
-    "age": [[InlineKeyboardButton(text="📞 Записать на диагностику", url="https://wa.me/996500431430")]],
-    "about": [[InlineKeyboardButton(text="🌐 Сайт Codify", url="https://codifylab.com")]],
-    "faq": [[InlineKeyboardButton(text="💬 Остались вопросы?", url="https://wa.me/996500431430")]],
-    "mentors": [[InlineKeyboardButton(text="📞 Записаться к ментору", url="https://wa.me/996500431430")]],
-    "codecoin": [[InlineKeyboardButton(text="🎁 Посмотреть мерч", url="https://www.instagram.com/codify.kids/")]],
-}
+def main_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="📅 Расписание"), KeyboardButton(text="💰 Цены")],
+            [KeyboardButton(text="📍 Адрес"),      KeyboardButton(text="✏️ Записаться")],
+            [KeyboardButton(text="📚 Курсы"),      KeyboardButton(text="👦 Возраст")],
+            [KeyboardButton(text="🪙 CodeCoin"),   KeyboardButton(text="📞 Контакты")],
+            [KeyboardButton(text="💻 Онлайн"),     KeyboardButton(text="👨‍🏫 Менторы")],
+            [KeyboardButton(text="ℹ️ О школе"),    KeyboardButton(text="❓ FAQ")],
+        ],
+        resize_keyboard=True,
+        persistent=True
+    )
+
+
+def extra_inline(data: str) -> InlineKeyboardMarkup | None:
+    rows = {
+        "courses": [[InlineKeyboardButton(text="✏️ Записаться на пробный", url="https://wa.me/996500431430")]],
+        "address": [[InlineKeyboardButton(text="📍 7-й мкр на карте", url="https://go.2gis.com/Aw4me"),
+                     InlineKeyboardButton(text="📍 Ибраимова на карте", url="https://go.2gis.com/yhL33")]],
+        "contacts": [[InlineKeyboardButton(text="💬 WhatsApp", url="https://wa.me/996500431430"),
+                      InlineKeyboardButton(text="📸 Instagram", url="https://www.instagram.com/codify.kids/")]],
+        "prices": [[InlineKeyboardButton(text="💬 Узнать цену в WhatsApp", url="https://wa.me/996500431430")]],
+        "schedule": [[InlineKeyboardButton(text="✏️ Выбрать время", url="https://wa.me/996500431430")]],
+        "enroll": [[InlineKeyboardButton(text="💬 WhatsApp", url="https://wa.me/996500431430"),
+                    InlineKeyboardButton(text="✈️ Telegram", url="https://t.me/codify_community")]],
+        "online": [[InlineKeyboardButton(text="💬 Записаться онлайн", url="https://wa.me/996500431430")]],
+        "age": [[InlineKeyboardButton(text="📞 Записать на диагностику", url="https://wa.me/996500431430")]],
+        "mentors": [[InlineKeyboardButton(text="📞 Записаться к ментору", url="https://wa.me/996500431430")]],
+        "codecoin": [[InlineKeyboardButton(text="🎁 Посмотреть мерч", url="https://www.instagram.com/codify.kids/")]],
+        "about": [[InlineKeyboardButton(text="🌐 Сайт Codify", url="https://codifylab.com")]],
+    }
+    btns = rows.get(data)
+    return InlineKeyboardMarkup(inline_keyboard=btns) if btns else None
+
 
 ANSWERS_MAP = {
-    "codecoin": answers.CODECOIN,
-    "age": answers.AGE,
-    "courses": answers.COURSES,
-    "schedule": answers.SCHEDULE,
-    "address": answers.ADDRESS,
-    "online": answers.ONLINE,
-    "prices": answers.PRICES,
-    "enroll": answers.ENROLL,
-    "contacts": answers.CONTACTS,
-    "mentors": answers.MENTORS,
-    "about": answers.ABOUT,
-    "faq": answers.FAQ,
+    "codecoin": answers.CODECOIN, "age": answers.AGE,
+    "courses": answers.COURSES, "schedule": answers.SCHEDULE,
+    "address": answers.ADDRESS, "online": answers.ONLINE,
+    "prices": answers.PRICES, "enroll": answers.ENROLL,
+    "contacts": answers.CONTACTS, "mentors": answers.MENTORS,
+    "about": answers.ABOUT, "faq": answers.FAQ,
+}
+
+BUTTON_MAP = {
+    "📚 Курсы": "courses", "📅 Расписание": "schedule",
+    "📍 Адрес": "address", "💻 Онлайн": "online",
+    "💰 Цены": "prices", "✏️ Записаться": "enroll",
+    "📞 Контакты": "contacts", "👨‍🏫 Менторы": "mentors",
+    "🪙 CodeCoin": "codecoin", "👦 Возраст": "age",
+    "ℹ️ О школе": "about", "❓ FAQ": "faq",
 }
 
 bot = Bot(token=os.getenv("BOT_TOKEN"), default=DefaultBotProperties(parse_mode=None))
@@ -119,15 +117,12 @@ def _kill_previous() -> None:
         pass
 
 
-def merge_keyboard(data: str | None) -> InlineKeyboardMarkup:
-    if not data:
-        return MAIN_KEYBOARD
-    extra = LINK_BUTTONS.get(data)
-    if not extra:
-        return MAIN_KEYBOARD
-    merged = MAIN_KEYBOARD.inline_keyboard.copy()
-    merged.extend(extra)
-    return InlineKeyboardMarkup(inline_keyboard=merged)
+async def send_answer(target: Message, key: str) -> None:
+    text = ANSWERS_MAP.get(key)
+    if not text:
+        return
+    inline_kb = extra_inline(key)
+    await target.answer(text, reply_markup=inline_kb or main_keyboard())
 
 
 async def handle_message(target: Message, user_id: int, text: str) -> None:
@@ -135,7 +130,7 @@ async def handle_message(target: Message, user_id: int, text: str) -> None:
     if cached:
         add_message(user_id, "user", text)
         add_message(user_id, "assistant", cached)
-        await target.answer(cached)
+        await target.answer(cached, reply_markup=main_keyboard())
         return
 
     add_message(user_id, "user", text)
@@ -143,58 +138,49 @@ async def handle_message(target: Message, user_id: int, text: str) -> None:
     try:
         history = get_session(user_id)
         api_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
-
         answer = await ask_ai(api_messages)
         cache_set(text, answer)
         add_message(user_id, "assistant", answer)
-        await target.answer(answer)
+        await target.answer(answer, reply_markup=main_keyboard())
 
     except Exception as e:
         logger.error("AI Error: %s", e)
-        error_text = str(e).lower()
+        err = str(e).lower()
         phone = "+996 500 431 430"
-        phone2 = "+996 700 431 430"
-        if "429" in error_text or "quota" in error_text or "rate limit" in error_text:
+        if "429" in err or "quota" in err or "rate limit" in err:
             msg = (
                 "😅 Слишком много запросов. Подождите минуту или напишите менеджеру:\n"
-                f"💬 WhatsApp: https://wa.me/996500431430\n"
-                f"✈️ Telegram: @codify_community\n"
-                f"📞 {phone}, {phone2}"
-            )
-        elif "api" in error_text or "key" in error_text:
-            msg = (
-                "⚙️ Проблема с подключением к AI. Обратитесь к менеджеру напрямую:\n"
-                f"💬 WhatsApp: https://wa.me/996500431430\n"
-                f"📞 {phone}, {phone2}"
+                "💬 WhatsApp: https://wa.me/996500431430\n"
+                f"📞 {phone}, +996 700 431 430"
             )
         else:
             msg = (
-                f"❌ Произошла ошибка. Попробуйте позже или напишите менеджеру:\n"
-                f"💬 WhatsApp: https://wa.me/996500431430\n"
-                f"📞 {phone}, {phone2}"
+                "❌ Произошла ошибка. Попробуйте позже:\n"
+                f"📞 {phone} / info@codifylab.com"
             )
-        await target.answer(msg)
+        await target.answer(msg, reply_markup=main_keyboard())
 
+
+# --- Start / Help ---
 
 @dp.message(CommandStart())
 async def start_handler(message: Message) -> None:
     clear_session(message.from_user.id)
-    await message.answer(WELCOME_MESSAGE, reply_markup=MAIN_KEYBOARD)
+    await message.answer(WELCOME_MESSAGE, reply_markup=main_keyboard())
 
 
 @dp.message(Command("help"))
 async def help_handler(message: Message) -> None:
-    await message.answer(HELP_MESSAGE, reply_markup=MAIN_KEYBOARD)
+    await message.answer(HELP_MESSAGE, reply_markup=main_keyboard())
 
 
 @dp.message(Command("cancel"))
-@dp.message(F.text.lower() == "отмена")
 async def cancel_handler(message: Message, state: FSMContext) -> None:
-    current_state = await state.get_state()
-    if current_state is None:
+    current = await state.get_state()
+    if current is None:
         return
     await state.clear()
-    await message.answer("❌ Запись на пробный урок отменена.", reply_markup=MAIN_KEYBOARD)
+    await message.answer("❌ Запись отменена.", reply_markup=main_keyboard())
 
 
 # --- Enrollment FSM ---
@@ -208,8 +194,7 @@ async def start_enrollment(message: Message, state: FSMContext) -> None:
     )
     await message.answer(
         "✏️ <b>Запись на пробный урок</b>\n\n"
-        "Пожалуйста, напишите ваше <b>Имя и Фамилию</b>:\n"
-        "(Для отмены напишите «отмена»)",
+        "Пожалуйста, напишите ваше <b>Имя и Фамилию</b>:",
         parse_mode="HTML",
         reply_markup=cancel_kb
     )
@@ -218,8 +203,11 @@ async def start_enrollment(message: Message, state: FSMContext) -> None:
 @dp.message(Enrollment.name)
 async def process_name(message: Message, state: FSMContext) -> None:
     name = message.text.strip()
+    if name.lower() == "отмена":
+        await state.clear()
+        return await message.answer("❌ Запись отменена.", reply_markup=main_keyboard())
     if len(name) < 2:
-        return await message.answer("Пожалуйста, напишите корректные имя и фамилию (минимум 2 символа).")
+        return await message.answer("Пожалуйста, напишите корректные имя и фамилию.")
     await state.update_data(name=name)
     await state.set_state(Enrollment.phone)
 
@@ -233,7 +221,7 @@ async def process_name(message: Message, state: FSMContext) -> None:
     )
     await message.answer(
         f"Приятно познакомиться, <b>{name}</b>!\n\n"
-        "Теперь укажите ваш <b>номер телефона</b> (или нажмите кнопку ниже):",
+        "Теперь укажите ваш <b>номер телефона</b>:",
         parse_mode="HTML",
         reply_markup=phone_kb
     )
@@ -246,6 +234,9 @@ async def process_phone(message: Message, state: FSMContext) -> None:
         phone = message.contact.phone_number
     else:
         text = message.text.strip()
+        if text.lower() == "отмена":
+            await state.clear()
+            return await message.answer("❌ Запись отменена.", reply_markup=main_keyboard())
         clean = "".join(filter(str.isdigit, text))
         if len(clean) < 6:
             return await message.answer("Пожалуйста, введите корректный номер телефона:")
@@ -271,56 +262,56 @@ async def process_phone(message: Message, state: FSMContext) -> None:
         except Exception as e:
             logger.error("Failed to notify manager: %s", e)
 
-    text = (
+    await message.answer(
         f"🎉 <b>Заявка на пробный урок принята!</b>\n\n"
         f"👤 <b>Имя:</b> {name}\n"
         f"📞 <b>Телефон:</b> {phone}\n\n"
         f"Менеджер свяжется с вами в ближайшее время! 😊\n\n"
-        f"Контакты:\n"
         f"💬 WhatsApp: https://wa.me/996500431430\n"
-        f"✈️ Telegram: @codify_community\n"
-        f"📞 +996 500 431 430, +996 700 431 430"
+        f"📞 +996 500 431 430, +996 700 431 430",
+        parse_mode="HTML",
+        reply_markup=main_keyboard()
     )
-    await message.answer(text, parse_mode="HTML", reply_markup=MAIN_KEYBOARD)
 
 
 # --- Command handlers ---
 
 @dp.message(Command("courses"))
 async def courses_handler(message: Message) -> None:
-    await message.answer(answers.COURSES, reply_markup=merge_keyboard("courses"))
-
+    await send_answer(message, "courses")
 
 @dp.message(Command("mentors"))
 async def mentors_handler(message: Message) -> None:
-    await message.answer(answers.MENTORS, reply_markup=merge_keyboard("mentors"))
-
+    await send_answer(message, "mentors")
 
 @dp.message(Command("prices"))
 async def prices_handler(message: Message) -> None:
-    await message.answer(answers.PRICES, reply_markup=merge_keyboard("prices"))
-
+    await send_answer(message, "prices")
 
 @dp.message(Command("address"))
 async def address_handler(message: Message) -> None:
-    await message.answer(answers.ADDRESS, reply_markup=merge_keyboard("address"))
+    await send_answer(message, "address")
 
 
-# --- Text handler (free text & keyboard words) ---
+# --- Text handler ---
 
 @dp.message(F.text)
 async def text_handler(message: Message, state: FSMContext) -> None:
-    chat_id = message.chat.id
     text = message.text.strip()
-
     clean = text.lower()
+
     if "записаться" in clean or "запись" in clean or "пробный" in clean:
         return await start_enrollment(message, state)
-    if "онлайн" in clean or "online" in clean:
-        return await message.answer(answers.ONLINE, reply_markup=merge_keyboard("online"))
+    if "онлайн" in clean:
+        return await send_answer(message, "online")
 
+    btn_key = BUTTON_MAP.get(text)
+    if btn_key:
+        return await send_answer(message, btn_key)
+
+    chat_id = message.chat.id
     if chat_id in pending:
-        return await message.answer("⏳ Уже думаю над вашим вопросом... Подождите немного!", reply_markup=MAIN_KEYBOARD)
+        return await message.answer("⏳ Уже думаю... Подождите немного!", reply_markup=main_keyboard())
 
     pending.add(chat_id)
     try:
@@ -329,32 +320,28 @@ async def text_handler(message: Message, state: FSMContext) -> None:
         pending.discard(chat_id)
 
 
-# --- Callback handler ---
+# --- Callback handler (legacy, for old inline messages) ---
 
 @dp.callback_query()
 async def callback_handler(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer()
-
     data = callback.data
     if data == "enroll":
         await start_enrollment(callback.message, state)
-        return
-
-    answer = ANSWERS_MAP.get(data)
-    if answer:
-        await callback.message.answer(answer, reply_markup=merge_keyboard(data))
+    elif data in ANSWERS_MAP:
+        await send_answer(callback.message, data)
     else:
-        await callback.message.answer("Неизвестная команда", reply_markup=MAIN_KEYBOARD)
+        await callback.message.answer("Неизвестная команда", reply_markup=main_keyboard())
 
+
+# --- Main ---
 
 async def main() -> None:
     token = os.getenv("BOT_TOKEN")
     if not token:
         logger.error("BOT_TOKEN не указан. Создайте файл .env на основе .env.example")
         return
-
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    if not os.getenv("GROQ_API_KEY"):
         logger.error("GROQ_API_KEY не указан. Создайте файл .env на основе .env.example")
         return
 
