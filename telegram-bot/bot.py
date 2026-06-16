@@ -207,10 +207,10 @@ async def start_enrollment(message: Message, state: FSMContext) -> None:
         resize_keyboard=True
     )
     await message.answer(
-        "✏️ *Запись на пробный урок*\n\n"
-        "Пожалуйста, напишите ваше *Имя и Фамилию*:\n"
-        "_(Для отмены напишите «отмена»)_",
-        parse_mode="Markdown",
+        "✏️ <b>Запись на пробный урок</b>\n\n"
+        "Пожалуйста, напишите ваше <b>Имя и Фамилию</b>:\n"
+        "(Для отмены напишите «отмена»)",
+        parse_mode="HTML",
         reply_markup=cancel_kb
     )
 
@@ -232,9 +232,9 @@ async def process_name(message: Message, state: FSMContext) -> None:
         one_time_keyboard=True
     )
     await message.answer(
-        f"Приятно познакомиться, *{name}*!\n\n"
-        "Теперь укажите ваш *номер телефона* (или нажмите кнопку ниже):",
-        parse_mode="Markdown",
+        f"Приятно познакомиться, <b>{name}</b>!\n\n"
+        "Теперь укажите ваш <b>номер телефона</b> (или нажмите кнопку ниже):",
+        parse_mode="HTML",
         reply_markup=phone_kb
     )
 
@@ -258,16 +258,16 @@ async def process_phone(message: Message, state: FSMContext) -> None:
     logger.info("Запись: Имя=%s, Телефон=%s, ChatID=%d", name, phone, message.chat.id)
 
     text = (
-        f"🎉 *Заявка на пробный урок принята!*\n\n"
-        f"👤 *Имя:* {name}\n"
-        f"📞 *Телефон:* {phone}\n\n"
+        f"🎉 <b>Заявка на пробный урок принята!</b>\n\n"
+        f"👤 <b>Имя:</b> {name}\n"
+        f"📞 <b>Телефон:</b> {phone}\n\n"
         f"Менеджер свяжется с вами в ближайшее время! 😊\n\n"
         f"Контакты:\n"
         f"💬 WhatsApp: https://wa.me/996500431430\n"
         f"✈️ Telegram: @codify_community\n"
         f"📞 +996 500 431 430, +996 700 431 430"
     )
-    await message.answer(text, parse_mode="Markdown", reply_markup=MAIN_KEYBOARD)
+    await message.answer(text, parse_mode="HTML", reply_markup=MAIN_KEYBOARD)
 
 
 # --- Command handlers ---
