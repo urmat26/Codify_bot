@@ -13,6 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
+from aiohttp import web
 
 from config import BOT_NAME, WELCOME_MESSAGE, HELP_MESSAGE
 from prompts import SYSTEM_PROMPT
@@ -20,6 +21,7 @@ from ai import ask_ai
 from session import add_message, get_session, clear_session
 from cache import cache_get, cache_set
 import answers
+
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -335,6 +337,21 @@ async def callback_handler(callback: CallbackQuery, state: FSMContext) -> None:
         await callback.message.answer("Неизвестная команда", reply_markup=main_keyboard())
 
 
+async def health_check(request):
+    return web.Response(text="OK")
+
+
+async def start_health_server():
+    app = web.Application()
+    app.router.add_get("/", health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.getenv("PORT", 7860))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logger.info("Health check server started on port %d", port)
+
+
 # --- Main ---
 
 async def main() -> None:
@@ -349,6 +366,9 @@ async def main() -> None:
     _kill_previous()
     with open(LOCK_FILE, "w") as f:
         f.write(str(os.getpid()))
+
+    # Start health check server for Hugging Face Spaces
+    asyncio.create_task(start_health_server())
 
     logger.info("Бот %s запущен!", BOT_NAME)
     print(f"Бот {BOT_NAME} запущен!")
