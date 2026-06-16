@@ -165,11 +165,14 @@ SCHOOL_DATA = {
         "earn": "Получаешь CodeCoin за выполнение домашних заданий и активность на уроках",
         "redeem": "Монеты можно обменять на фирменный мёрч Codify",
         "merch": [
-            {"item": "Бомбер Codify", "price": "3500 CodeCoin"},
-            {"item": "Рюкзак Codify", "price": "2500 CodeCoin"},
+            {"item": "Свитер Codify", "price": "1500 CodeCoin"},
+            {"item": "Рюкзак Codify", "price": "2000 CodeCoin"},
+            {"item": "Термос Codify", "price": "800 CodeCoin"},
+            {"item": "Блокнот Codify", "price": "500 CodeCoin"},
             {"item": "Кружка Codify", "price": "300 CodeCoin"},
             {"item": "Носки Codify", "price": "170 CodeCoin"},
-            {"item": "Стикерпак", "price": "20–10 CodeCoin"}
+            {"item": "Ручка/карандаш Codify", "price": "100 CodeCoin"},
+            {"item": "Стикерпак", "price": "30 CodeCoin"}
         ]
     },
 
