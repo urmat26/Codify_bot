@@ -170,7 +170,7 @@ SCHOOL_DATA = {
             {"item": "Термос Codify", "price": "800 CodeCoin"},
             {"item": "Блокнот Codify", "price": "500 CodeCoin"},
             {"item": "Кружка Codify", "price": "300 CodeCoin"},
-            {"item": "Носки Codify", "price": "170 CodeCoin"},
+            {"item": "Носки Codify", "price": "150 CodeCoin"},
             {"item": "Ручка/карандаш Codify", "price": "100 CodeCoin"},
             {"item": "Стикерпак", "price": "30 CodeCoin"}
         ]
