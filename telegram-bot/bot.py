@@ -357,10 +357,10 @@ async def start_health_server():
 async def main() -> None:
     token = os.getenv("BOT_TOKEN")
     if not token:
-        logger.error("BOT_TOKEN не указан. Создайте файл .env на основе .env")
+        logger.error("BOT_TOKEN не указан. Создайте файл .env на основе .env.example")
         return
     if not os.getenv("GROQ_API_KEY"):
-        logger.error("GROQ_API_KEY не указан. Создайте файл .env на основе .env")
+        logger.error("GROQ_API_KEY не указан. Создайте файл .env на основе .env.example")
         return
 
     _kill_previous()
