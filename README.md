@@ -5,5 +5,5 @@ colorTo: indigo
 sdk: docker
 pinned: false
 
-# Codify Telegram Bot
+ Codify Telegram Bot
 Managed automatically via GitHub Actions.
