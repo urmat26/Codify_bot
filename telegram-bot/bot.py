@@ -8,7 +8,7 @@ import html
 from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, FSInputFile
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -123,7 +123,12 @@ async def send_answer(target: Message, key: str) -> None:
     if not text:
         return
     inline_kb = extra_inline(key)
-    await target.answer(text, reply_markup=inline_kb or main_keyboard())
+    reply = inline_kb or main_keyboard()
+    if key == "about":
+        photo = FSInputFile("telegram-bot/assets/school-photo.jpg")
+        await target.answer_photo(photo=photo, caption=text, reply_markup=reply)
+    else:
+        await target.answer(text, reply_markup=reply)
 
 
 async def handle_message(target: Message, user_id: int, text: str) -> None:
@@ -168,7 +173,8 @@ async def handle_message(target: Message, user_id: int, text: str) -> None:
 @dp.message(CommandStart())
 async def start_handler(message: Message) -> None:
     clear_session(message.from_user.id)
-    await message.answer(WELCOME_MESSAGE, reply_markup=main_keyboard())
+    logo = FSInputFile("telegram-bot/assets/codify-logo.svg")
+    await message.answer_photo(photo=logo, caption=WELCOME_MESSAGE, reply_markup=main_keyboard())
 
 
 @dp.message(Command("help"))
