@@ -7,6 +7,9 @@ import signal
 import html
 from dotenv import load_dotenv
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(BASE_DIR, "assets")
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, FSInputFile
 from aiogram.filters import Command, CommandStart
@@ -125,7 +128,7 @@ async def send_answer(target: Message, key: str) -> None:
     inline_kb = extra_inline(key)
     reply = inline_kb or main_keyboard()
     if key == "about":
-        photo = FSInputFile("telegram-bot/assets/school-photo.jpg")
+        photo = FSInputFile(os.path.join(ASSETS_DIR, "school-photo.jpg"))
         await target.answer_photo(photo=photo, caption=text, reply_markup=reply)
     else:
         await target.answer(text, reply_markup=reply)
@@ -173,7 +176,7 @@ async def handle_message(target: Message, user_id: int, text: str) -> None:
 @dp.message(CommandStart())
 async def start_handler(message: Message) -> None:
     clear_session(message.from_user.id)
-    logo = FSInputFile("telegram-bot/assets/favicon.webp")
+    logo = FSInputFile(os.path.join(ASSETS_DIR, "favicon.webp"))
     await message.answer_photo(photo=logo, caption=WELCOME_MESSAGE, reply_markup=main_keyboard())
 
 
