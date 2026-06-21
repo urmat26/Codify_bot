@@ -173,7 +173,7 @@ async def handle_message(target: Message, user_id: int, text: str) -> None:
 @dp.message(CommandStart())
 async def start_handler(message: Message) -> None:
     clear_session(message.from_user.id)
-    logo = FSInputFile("telegram-bot/assets/codify-logo.svg")
+    logo = FSInputFile("telegram-bot/assets/favicon.webp")
     await message.answer_photo(photo=logo, caption=WELCOME_MESSAGE, reply_markup=main_keyboard())
 
 
