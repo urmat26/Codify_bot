@@ -18,6 +18,7 @@ SCHOOL_DATA = {
     "instagram_handle": "@codify.kids",
     "youtube": "https://www.youtube.com/@codifypodcast",
     "facebook": "https://www.facebook.com/teens.codify/",
+    "founder": "Динара Руслан (Dinara Ruslan) — основатель и CEO Codify. Советник премьер-министра КР (2021), чемпион UNICEF «Girls in Science», одна из первых женщин-предпринимателей в IT Кыргызстана",
     "founded": "2020",
     "rating": "4.9",
     "students_count": "9000+",

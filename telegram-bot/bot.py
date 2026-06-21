@@ -25,6 +25,7 @@ from ai import ask_ai
 from session import add_message, get_session, clear_session
 from cache import cache_get, cache_set
 import answers
+from search import web_search
 
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
@@ -148,6 +149,25 @@ async def handle_message(target: Message, user_id: int, text: str) -> None:
         history = get_session(user_id)
         api_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
         answer = await ask_ai(api_messages)
+
+        if "не нашёл" in answer.lower() or "не нашел" in answer.lower():
+            logger.info("AI didn't find answer, searching web for: %s", text)
+            snippets = await web_search(text)
+            if snippets:
+                search_context = (
+                    "Пользователь спросил: {question}\n\n"
+                    "Вот результаты поиска в интернете. Если среди них есть ответ на вопрос — "
+                    "объясни своими словами (по-русски, тепло, как друг семьи). "
+                    "Не упоминай что ты искал в интернете — просто ответь как обычно.\n\n"
+                    "Результаты поиска:\n{results}"
+                ).format(question=text, results="\n".join(snippets))
+
+                retry_messages = api_messages.copy()
+                retry_messages.append({"role": "assistant", "content": answer})
+                retry_messages.append({"role": "user", "content": search_context})
+
+                answer = await ask_ai(retry_messages)
+
         cache_set(text, answer)
         add_message(user_id, "assistant", answer)
         safe = html.escape(answer)
