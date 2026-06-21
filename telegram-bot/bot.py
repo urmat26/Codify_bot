@@ -4,6 +4,7 @@ import logging
 import asyncio
 import platform
 import signal
+import html
 from dotenv import load_dotenv
 
 from aiogram import Bot, Dispatcher, F
@@ -89,7 +90,7 @@ BUTTON_MAP = {
     "🔄 Новый чат": "reset",
 }
 
-bot = Bot(token=os.getenv("BOT_TOKEN"), default=DefaultBotProperties(parse_mode=None))
+bot = Bot(token=os.getenv("BOT_TOKEN"), default=DefaultBotProperties(parse_mode="HTML"))
 dp = Dispatcher(storage=MemoryStorage())
 
 
@@ -141,7 +142,8 @@ async def handle_message(target: Message, user_id: int, text: str) -> None:
         answer = await ask_ai(api_messages)
         cache_set(text, answer)
         add_message(user_id, "assistant", answer)
-        await target.answer(answer, reply_markup=main_keyboard())
+        safe = html.escape(answer)
+        await target.answer(safe, reply_markup=main_keyboard())
 
     except Exception as e:
         logger.error("AI Error: %s", e)
